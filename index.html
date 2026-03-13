@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinIQ Pro - Business Tracker</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container" id="app">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="logo">
+                <span class="logo-icon">💠</span>
+                <h1>FinIQ</h1>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#" class="active" data-target="dashboard"><span class="icon">📊</span> Dashboard</a></li>
+                <li><a href="#" data-target="pos" class="has-tooltip" data-tooltip="Point of Sale: Tap items to checkout quickly"><span class="icon">🛒</span> Point of Sale</a></li>
+                <li><a href="#" data-target="inventory" class="has-tooltip" data-tooltip="Manage your products, prices, and stock"><span class="icon">📦</span> Inventory</a></li>
+                <li><a href="#" data-target="expenses" class="has-tooltip" data-tooltip="Record daily business costs"><span class="icon">💸</span> Expenses</a></li>
+                <li><a href="#" data-target="sales-history" class="has-tooltip" data-tooltip="Review past sales records"><span class="icon">📜</span> Sales History</a></li>
+                <li><a href="#" data-target="health" class="has-tooltip" data-tooltip="Check your overall financial score & profit leaks"><span class="icon">❤️</span> Health & Leakage</a></li>
+                <li><a href="#" data-target="ai-assistant" class="has-tooltip" data-tooltip="Ask questions about your data"><span class="icon">🤖</span> AI Assistant</a></li>
+                <li><a href="#" data-target="glossary" class="has-tooltip" data-tooltip="Learn financial terms simply"><span class="icon">📚</span> Glossary</a></li>
+                <li class="nav-spacer"></li>
+                <li><a href="#" data-target="settings"><span class="icon">⚙️</span> Settings</a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header for Mobile/Context -->
+            <header class="top-header">
+                <h2 id="current-view-title">Dashboard</h2>
+                <div class="business-badge has-tooltip" data-tooltip="Change your business info in Settings" id="header-business-name">My Business</div>
+            </header>
+
+            <!-- Dashboard View -->
+            <section id="dashboard" class="view active-view">
+                
+                <div class="dashboard-controls">
+                    <select id="dash-timeframe" class="tech-select has-tooltip" data-tooltip="Filter data by time period">
+                        <option value="today">Today</option>
+                        <option value="week">This Week</option>
+                        <option value="month" selected>This Month</option>
+                        <option value="all">All Time</option>
+                    </select>
+                </div>
+
+                <!-- FinIQ Insight of the Day -->
+                <div id="insight-of-the-day" class="insight-card hidden">
+                    <div class="insight-icon">💡</div>
+                    <div class="insight-content">
+                        <h4>FinIQ Insight of the Day</h4>
+                        <p id="insight-message">Analyzing your business data...</p>
+                    </div>
+                </div>
+
+                <div class="summary-cards">
+                    <div class="card glass-card has-tooltip" data-tooltip="Total money collected from sales">
+                        <div class="card-icon blue">💰</div>
+                        <div class="card-details">
+                            <h3>Total Revenue</h3>
+                            <p class="amount" id="dash-revenue">₦0.00</p>
+                        </div>
+                    </div>
+                    <div class="card glass-card highlight-card has-tooltip" data-tooltip="Your actual take-home profit (Gross Profit minus Expenses)">
+                        <div class="card-icon purple">💎</div>
+                        <div class="card-details">
+                            <h3>Net Profit</h3>
+                            <p class="amount" id="dash-net">₦0.00</p>
+                        </div>
+                    </div>
+                    <div class="card glass-card has-tooltip" data-tooltip="Profit before paying for expenses like rent or transport (Revenue minus COGS)">
+                        <div class="card-icon green">📈</div>
+                        <div class="card-details">
+                            <h3>Gross Profit</h3>
+                            <p class="amount" id="dash-gross">₦0.00</p>
+                        </div>
+                    </div>
+                    <div class="card glass-card has-tooltip" data-tooltip="Other costs to run the business (Rent, Transport, etc.)">
+                        <div class="card-icon red">📉</div>
+                        <div class="card-details">
+                            <h3>Total Expenses</h3>
+                            <p class="amount" id="dash-expenses">₦0.00</p>
+                        </div>
+                    </div>
+                    <div class="card glass-card has-tooltip" data-tooltip="Cost of Goods (What you paid to buy these products)">
+                        <div class="card-icon yellow">📦</div>
+                        <div class="card-details">
+                            <h3>Cost of Goods (COGS)</h3>
+                            <p class="amount" id="dash-cogs">₦0.00</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="charts-container">
+                    <div class="chart-wrapper">
+                        <h3>Financial Trend</h3>
+                        <canvas id="mainChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Point of Sale (POS) View -->
+            <section id="pos" class="view hidden">
+                <div class="pos-layout">
+                    <!-- Product Selection Area -->
+                    <div class="pos-products">
+                        <div class="pos-search">
+                            <input type="text" id="pos-search-input" placeholder="Search inventory..." class="tech-input">
+                        </div>
+                        <div class="product-grid" id="pos-product-grid">
+                            <!-- Populated dynamically from inventory -->
+                        </div>
+                    </div>
+
+                    <!-- Cart Sidebar Area -->
+                    <div class="pos-cart">
+                        <h3>Current Sale</h3>
+                        <div class="cart-items" id="cart-items">
+                            <div class="empty-cart-msg">Select items to add to sale</div>
+                            <!-- Cart items populate here -->
+                        </div>
+                        <div class="cart-summary">
+                            <div class="cart-row">
+                                <span>Total Revenue:</span>
+                                <span id="cart-revenue-total">₦0.00</span>
+                            </div>
+                            <button id="btn-checkout" class="btn-primary full-width has-tooltip" data-tooltip="Save sale and reduce inventory" disabled>Complete Sale</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Inventory View -->
+            <section id="inventory" class="view hidden">
+                <div class="split-header mb-20">
+                    <div>
+                        <h3>Manage Inventory</h3>
+                        <p class="sub-text">Add products, units of measure, and track stock levels.</p>
+                    </div>
+                </div>
+
+                <!-- Inline Quick Add Row -->
+                <div class="glass-panel" style="padding: 16px; margin-bottom: 24px;">
+                    <h4 style="margin-bottom: 12px; font-size:14px; color:var(--text-muted)">⚡ Quick Add Product</h4>
+                    <form id="quick-add-form" style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+                        <input type="hidden" id="inv-id">
+                        <div class="form-group" style="flex: 2; margin-bottom: 0;">
+                            <label>Product Name</label>
+                            <input type="text" id="inv-name" class="tech-input" placeholder="e.g. Rice" required>
+                        </div>
+                        <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                            <label>Unit (UOM)</label>
+                            <input type="text" id="inv-uom" class="tech-input" placeholder="e.g. Bags, pcs" list="uom-options" required>
+                            <datalist id="uom-options">
+                                <option value="Bags"></option>
+                                <option value="Packs"></option>
+                                <option value="Pieces"></option>
+                                <option value="Bottles"></option>
+                                <option value="Cartons"></option>
+                                <option value="Kg"></option>
+                            </datalist>
+                        </div>
+                        <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                            <label class="has-tooltip" data-tooltip="What you paid for 1 unit">Cost (₦)</label>
+                            <input type="number" id="inv-cost" step="0.01" class="tech-input" required>
+                        </div>
+                        <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                            <label class="has-tooltip" data-tooltip="What you will sell 1 unit for">Price (₦)</label>
+                            <input type="number" id="inv-price" step="0.01" class="tech-input" required>
+                        </div>
+                        <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                            <label>Stock Qty</label>
+                            <input type="number" id="inv-stock" class="tech-input" required>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <button type="submit" class="btn-primary" style="height: 48px; padding: 0 24px;">+ Save</button>
+                            <button type="button" class="btn-secondary hidden" id="btn-cancel-edit" style="height: 48px; padding: 0 16px; margin-left:8px;">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="table-container glass-panel">
+                    <table class="tech-table">
+                        <thead>
+                            <tr>
+                                <th>Product Details</th>
+                                <th>Stock</th>
+                                <th>Cost Price</th>
+                                <th>Selling Price</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventory-body">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Sales History View -->
+            <section id="sales-history" class="view hidden">
+                <div class="glass-panel">
+                    <h3>Recent Sales Transactions</h3>
+                    <p class="sub-text mb-20">A chronological list of your registered sales.</p>
+                    <div id="sales-history-list" class="tech-list mt-20">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Expenses View -->
+            <section id="expenses" class="view hidden">
+                <div class="split-layout">
+                    <!-- Form -->
+                    <div class="form-panel glass-panel">
+                        <h3>Record New Expense</h3>
+                        <form id="expense-form">
+                            <div class="form-group">
+                                <label>Date</label>
+                                <input type="date" id="exp-date" class="tech-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Amount (₦)</label>
+                                <input type="number" id="exp-amount" step="0.01" class="tech-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Category</label>
+                                <input type="text" id="exp-category" class="tech-input" placeholder="Select or type category" list="exp-category-list" required>
+                                <datalist id="exp-category-list">
+                                    <option value="Transport"></option>
+                                    <option value="Electricity"></option>
+                                    <option value="Rent"></option>
+                                    <option value="Salaries"></option>
+                                    <option value="Marketing"></option>
+                                    <option value="Other (Misc)"></option>
+                                </datalist>
+                            </div>
+                            <div class="form-group">
+                                <label>Notes</label>
+                                <input type="text" id="exp-notes" class="tech-input" placeholder="e.g. Fuel for generator">
+                            </div>
+                            <button type="submit" class="btn-danger full-width">Save Expense</button>
+                        </form>
+                    </div>
+
+                    <!-- Recent Expenses List -->
+                    <div class="list-panel glass-panel">
+                        <h3>Recent Expenses</h3>
+                        <div id="expenses-list" class="tech-list">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Health & Profit Leakage View -->
+            <section id="health" class="view hidden">
+                <div class="split-layout">
+                    <!-- Health Score Column -->
+                    <div class="health-hero glass-panel" style="flex-direction: column; text-align: center;">
+                        <div>
+                            <h3 class="has-tooltip" data-tooltip="Score from 0-100 indicating financial wellness">Financial Health Score</h3>
+                            <p class="sub-text">Overall snapshot of your business health.</p>
+                        </div>
+                        <div class="score-ring" id="score-ring">
+                            <div class="score-circle">
+                                <span id="health-score-value">100</span>
+                            </div>
+                        </div>
+                        <div class="health-status">
+                            <h3 id="health-status-text">Healthy</h3>
+                        </div>
+                        <p id="health-status-desc" style="max-width: 100%;">Your business is doing well! Keep it up.</p>
+                    </div>
+
+                    <!-- Profit Leakage Radar -->
+                    <div class="leakage-section glass-panel">
+                        <div>
+                            <h3 class="has-tooltip" data-tooltip="Pinpoints exactly where you are losing money unnecessarily">Profit Leakage Radar</h3>
+                            <p class="sub-text">We scan your inventory, sales, and expenses for money leaks.</p>
+                        </div>
+                        
+                        <div id="leakage-radar-status" class="radar-status mt-20">
+                            <!-- e.g. "Low Leakage detected" -->
+                            <span id="leak-status-badge" class="stock-badge stock-good">Scanning Data...</span>
+                        </div>
+
+                        <div id="leakage-alerts-container" class="mt-20" style="display:flex; flex-direction: column; gap: 12px;">
+                            <!-- Dynamic leakage warning cards -->
+                            <div class="empty-alert">Checking your business health...</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Glossary View -->
+            <section id="glossary" class="view hidden">
+                <div class="glass-panel">
+                    <h3>Financial Glossary</h3>
+                    <p class="sub-text mb-20">Simple, layman explanations of the terms we use in this app.</p>
+                    
+                    <div class="glossary-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px;">
+                        
+                        <div class="pos-item" style="text-align: left; cursor: default;">
+                            <h4 style="color:var(--primary-color); margin-bottom:8px;">Revenue</h4>
+                            <p style="font-size:14px; color:var(--text-muted)">The total money you collect from your customers during a sale, before deducting any costs.</p>
+                        </div>
+
+                        <div class="pos-item" style="text-align: left; cursor: default;">
+                            <h4 style="color:var(--warning-color); margin-bottom:8px;">Cost of Goods Sold (COGS)</h4>
+                            <p style="font-size:14px; color:var(--text-muted)">What you originally paid your supplier to buy the exact items you just sold. E.g. If you sold 2 bags of rice, COGS is what those 2 bags cost you.</p>
+                        </div>
+                        
+                        <div class="pos-item" style="text-align: left; cursor: default;">
+                            <h4 style="color:var(--success-color); margin-bottom:8px;">Gross Profit</h4>
+                            <p style="font-size:14px; color:var(--text-muted)"><code>Revenue</code> minus <code>Cost of Goods</code>.<br>This is your profit on the products themselves, before paying for transport or rent.</p>
+                        </div>
+
+                        <div class="pos-item" style="text-align: left; cursor: default;">
+                            <h4 style="color:var(--purple-color); margin-bottom:8px;">Net Profit</h4>
+                            <p style="font-size:14px; color:var(--text-muted)"><code>Gross Profit</code> minus all <code>Expenses</code>.<br>Your actual "take-home" money. If this is negative, you are operating at a loss.</p>
+                        </div>
+
+                        <div class="pos-item" style="text-align: left; cursor: default;">
+                            <h4 style="color:var(--danger-color); margin-bottom:8px;">Profit Leakage</h4>
+                            <p style="font-size:14px; color:var(--text-muted)">Areas where money is slipping away without you noticing: Selling items below cost price, items expiring on shelves, or sudden spikes in expenses.</p>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+            <!-- AI Assistant View -->
+            <section id="ai-assistant" class="view hidden">
+                <div class="chat-container glass-panel">
+                    <div class="chat-history" id="chat-history">
+                        <div class="chat-bubble ai">
+                            Hello! I am your advanced FinIQ assistant. Ask me questions like:<br>
+                            • "What is my most profitable product?"<br>
+                            • "What is my total Gross Profit?"<br>
+                            • "Which products are running low on stock?"<br>
+                            • "What does Gross Margin mean?"
+                        </div>
+                    </div>
+                    <div class="chat-input-area">
+                        <div class="quick-prompts">
+                            <span class="prompt-chip">Most profitable product?</span>
+                            <span class="prompt-chip">Low stock items?</span>
+                            <span class="prompt-chip">What is Gross Profit?</span>
+                            <span class="prompt-chip">What is COGS?</span>
+                            <span class="prompt-chip">What is my biggest expense?</span>
+                            <span class="prompt-chip">How much profit have I made?</span>
+                        </div>
+                        <div class="input-controls">
+                            <input type="text" id="ai-input" class="tech-input" placeholder="Ask a question about your business data...">
+                            <button id="ai-send" class="btn-icon">➤</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Settings View -->
+            <section id="settings" class="view hidden">
+                <div class="glass-panel" style="max-width: 600px; margin: 0 auto;">
+                    <h3>Business Settings</h3>
+                    <p class="sub-text mb-20">Configure your initial parameters.</p>
+                    
+                    <form id="settings-form">
+                        <div class="form-group">
+                            <label>Business Name</label>
+                            <input type="text" id="set-name" class="tech-input" placeholder="My Retail Store" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="has-tooltip" data-tooltip="Money used to start. Used to offset early expenses so health score doesn't drop immediately">Starting Capital Injection (₦)</label>
+                            <input type="number" id="set-capital" class="tech-input" step="0.01" value="0">
+                        </div>
+                        <div class="form-group">
+                            <button type="button" class="btn-danger outline has-tooltip" data-tooltip="Wipe all data from this device" id="btn-reset-data">Danger: Clear All Data</button>
+                        </div>
+                        <div class="mt-20 flex-between">
+                            <button type="button" class="btn-secondary" id="btn-load-demo" class="has-tooltip" data-tooltip="Populate app with realistic sample data">Load Demo Business Data</button>
+                            <button type="submit" class="btn-primary">Save Settings</button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Welcome Modal -->
+    <div id="welcome-modal" class="modal-overlay hidden">
+        <div class="modal-content glass-panel">
+            <div class="modal-icon">👋</div>
+            <h2>Welcome to FinIQ</h2>
+            <p class="mb-20">FinIQ helps small businesses:</p>
+            <ul class="welcome-list mb-20">
+                <li>📊 Track sales</li>
+                <li>💎 Understand profit</li>
+                <li>🚨 Detect money leaks</li>
+                <li>🧠 Make smarter financial decisions</li>
+            </ul>
+            <p class="mb-20" style="color:var(--text-muted); font-size:14px;">You can start adding your inventory and sales right away, or load our demo dataset to see how the analytics engine works.</p>
+            <div class="modal-actions">
+                <button id="btn-welcome-demo" class="btn-primary full-width mb-10">Load Demo Data</button>
+                <button id="btn-welcome-start" class="btn-secondary full-width">Start Fresh</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
