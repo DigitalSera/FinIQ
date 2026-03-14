@@ -52,6 +52,15 @@
                     </select>
                 </div>
 
+                <!-- Low Stock Dashboard Alert -->
+                <div id="low-stock-alert" class="insight-card hidden" style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(15, 23, 42, 0.9)); border-color: rgba(239, 68, 68, 0.4); cursor: pointer; display: none;">
+                    <div class="insight-icon" style="filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.5));">⚠</div>
+                    <div class="insight-content">
+                        <h4 style="color: #f87171;">Low Stock Alert</h4>
+                        <p id="low-stock-message" style="color: var(--text-main);">0 products are running low on stock.</p>
+                    </div>
+                </div>
+
                 <!-- FinIQ Insight of the Day -->
                 <div id="insight-of-the-day" class="insight-card hidden">
                     <div class="insight-icon">💡</div>
@@ -74,6 +83,13 @@
                         <div class="card-details">
                             <h3>Net Profit</h3>
                             <p class="amount" id="dash-net">₦0.00</p>
+                        </div>
+                    </div>
+                    <div class="card glass-card has-tooltip" data-tooltip="Percentage of revenue that is profit after all costs">
+                        <div class="card-icon green">📊</div>
+                        <div class="card-details">
+                            <h3>Profit Margin</h3>
+                            <p class="amount" id="dash-margin">0%</p>
                         </div>
                     </div>
                     <div class="card glass-card has-tooltip" data-tooltip="Profit before paying for expenses like rent or transport (Revenue minus COGS)">
@@ -328,6 +344,11 @@
                         <div class="pos-item" style="text-align: left; cursor: default;">
                             <h4 style="color:var(--purple-color); margin-bottom:8px;">Net Profit</h4>
                             <p style="font-size:14px; color:var(--text-muted)"><code>Gross Profit</code> minus all <code>Expenses</code>.<br>Your actual "take-home" money. If this is negative, you are operating at a loss.</p>
+                        </div>
+
+                        <div class="pos-item" style="text-align: left; cursor: default;">
+                            <h4 style="color:var(--primary-color); margin-bottom:8px;">Profit Margin</h4>
+                            <p style="font-size:14px; color:var(--text-muted)">Profit Margin shows what percentage of your sales becomes real profit after all costs have been deducted.<br><br><code>(Net Profit ÷ Revenue) × 100</code><br><br>If a business sells goods worth ₦100,000 and keeps ₦25,000 as profit after expenses, the profit margin is 25%.</p>
                         </div>
 
                         <div class="pos-item" style="text-align: left; cursor: default;">

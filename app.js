@@ -3,7 +3,7 @@ let state = {
     inventory: JSON.parse(localStorage.getItem('finiq_inventory')) || [],
     sales: JSON.parse(localStorage.getItem('finiq_sales')) || [],
     expenses: JSON.parse(localStorage.getItem('finiq_expenses')) || [],
-    settings: JSON.parse(localStorage.getItem('finiq_settings')) || { businessName: 'My Retail Store', capital: 0 }
+    settings: JSON.parse(localStorage.getItem('finiq_settings')) || { businessName: 'My Retail Store', capital: 0, bizType: 'retail', scenario: 'thriving' }
 };
 
 let cart = []; // Temporary cart for POS
@@ -28,6 +28,9 @@ const dashCogs = document.getElementById('dash-cogs');
 const dashGross = document.getElementById('dash-gross');
 const dashExpenses = document.getElementById('dash-expenses');
 const dashNet = document.getElementById('dash-net');
+const dashMargin = document.getElementById('dash-margin');
+const lowStockAlert = document.getElementById('low-stock-alert');
+const lowStockMessage = document.getElementById('low-stock-message');
 const insightCard = document.getElementById('insight-of-the-day');
 const insightMessage = document.getElementById('insight-message');
 
@@ -129,6 +132,9 @@ const init = () => {
     document.getElementById('set-name').value = state.settings.businessName;
     document.getElementById('set-capital').value = state.settings.capital;
     
+    if(document.getElementById('settings-biz-type')) document.getElementById('settings-biz-type').value = state.settings.bizType || 'retail';
+    if(document.getElementById('settings-scenario')) document.getElementById('settings-scenario').value = state.settings.scenario || 'thriving';
+    
     // Default today's date in expense form
     document.getElementById('exp-date').value = new Date().toISOString().split('T')[0];
 
@@ -200,27 +206,49 @@ if (btnLoadDemo) {
 
 function loadDemoData(isModal = false) {
     const hasData = state.inventory.length > 0 || state.sales.length > 0 || state.expenses.length > 0;
-    if(hasData && !confirm('This will wipe your current data and load a demo dataset. Continue?')) return;
     
-    let bizType = 'retail';
-    let scenario = 'thriving';
+    // Determine target business type early to fuel the warning prompt
+    let targetBizType = 'retail';
+    let targetScenario = 'thriving';
+    if(isModal) {
+        if(document.getElementById('modal-biz-type')) targetBizType = document.getElementById('modal-biz-type').value;
+        if(document.getElementById('modal-scenario')) targetScenario = document.getElementById('modal-scenario').value;
+    } else {
+        if(document.getElementById('settings-biz-type')) targetBizType = document.getElementById('settings-biz-type').value;
+        if(document.getElementById('settings-scenario')) targetScenario = document.getElementById('settings-scenario').value;
+    }
+
+    if(hasData) {
+        const warning = `WARNING: You are about to load a synthetic 60-day demo dataset for a ${targetBizType.toUpperCase()} store.\n\nThis will completely wipe your current Inventory, Sales tracking, and Expenses.\n\nDo you want to proceed and overwrite your real data?`;
+        if(!confirm(warning)) return;
+    }
+    
+    let bizType = targetBizType;
+    let scenario = targetScenario;
     
     if (isModal) {
         const typeEl = document.getElementById('modal-biz-type');
         const scenEl = document.getElementById('modal-scenario');
         if (typeEl) bizType = typeEl.value;
         if (scenEl) scenario = scenEl.value;
+        state.settings.bizType = bizType;
+        state.settings.scenario = scenario;
+        saveState();
     } else {
         const typeEl = document.getElementById('settings-biz-type');
         const scenEl = document.getElementById('settings-scenario');
         if (typeEl) bizType = typeEl.value;
         if (scenEl) scenario = scenEl.value;
+        state.settings.bizType = bizType;
+        state.settings.scenario = scenario;
+        saveState();
     }
     
     triggerAutoRefresh(() => {
         const now = new Date();
         const dates = [];
-        for (let i = 29; i >= 0; i--) {
+        // Extend to 60 days
+        for (let i = 59; i >= 0; i--) {
             const d = new Date(now);
             d.setDate(d.getDate() - i);
             dates.push(d);
@@ -453,12 +481,32 @@ function updateDashboard() {
 
     dashNet.style.color = netProfit >= 0 ? 'var(--purple-color)' : 'var(--danger-color)';
 
+    if (dashMargin) {
+        const marginValue = totalRevenue > 0 ? Math.round((netProfit / totalRevenue) * 100) : 0;
+        dashMargin.textContent = `${marginValue}%`;
+    }
+
     updateChart(filteredSales, filteredExpenses);
     generateInsights(grossProfit, totalRevenue, totalExpenses);
 }
 
 function generateInsights(grossProfit, totalRevenue, totalExpenses) {
     if(!insightCard) return;
+    
+    // Low Stock Alert Component 
+    const lows = state.inventory.filter(i => i.stock <= (i.minStockAlert || 0));
+    if (lowStockAlert) {
+        if (lows.length > 0) {
+            lowStockAlert.classList.remove('hidden');
+            lowStockAlert.style.display = 'flex';
+            if (lowStockMessage) lowStockMessage.textContent = `${lows.length} product(s) are running low on stock.`;
+            lowStockAlert.onclick = () => document.querySelector('[data-target="inventory"]').click();
+        } else {
+            lowStockAlert.classList.add('hidden');
+            lowStockAlert.style.display = 'none';
+        }
+    }
+
     if (state.sales.length === 0 && state.expenses.length === 0) {
         insightCard.classList.add('hidden');
         return;
@@ -498,7 +546,6 @@ function generateInsights(grossProfit, totalRevenue, totalExpenses) {
     }
 
     // Inventory check 1: Low stock
-    const lows = state.inventory.filter(i => i.stock <= (i.minStockAlert||0));
     if (lows.length > 0) {
         insights.push(`📉 ${lows.length} product(s) are running low on stock.`);
     }
@@ -1003,16 +1050,26 @@ function updateHealthAndLeakage() {
 // ===== Settings Logic =====
 settingsForm.addEventListener('submit', (e) => {
     e.preventDefault();
+    
+    state.settings.businessName = document.getElementById('set-name').value;
+    state.settings.capital = parseFloat(document.getElementById('set-capital').value) || 0;
+    
+    const typeEl = document.getElementById('settings-biz-type');
+    const scenEl = document.getElementById('settings-scenario');
+    if(typeEl) state.settings.bizType = typeEl.value;
+    if(scenEl) state.settings.scenario = scenEl.value;
+    
+    saveState();
+    
     triggerAutoRefresh(() => {
-        state.settings.businessName = document.getElementById('set-name').value;
-        state.settings.capital = parseFloat(document.getElementById('set-capital').value) || 0;
         headerBusinessName.textContent = state.settings.businessName;
         showToast('Settings saved successfully');
     });
 });
 
 btnResetData.addEventListener('click', () => {
-    if (confirm("DANGER: This will delete ALL inventory, sales, and expense data. Are you absolutely sure?")) {
+    let warningMsg = "DANGER ZONE: You are about to wipe your entire FinIQ account clean.\n\nAll Products, Sales History, Expenses, and Dashboard configurations will be permanently deleted and cannot be recovered.\n\nAre you absolutely sure you want to start fresh?";
+    if (confirm(warningMsg)) {
         localStorage.clear();
         location.reload();
     }
