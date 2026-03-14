@@ -171,58 +171,244 @@ navLinks.forEach(link => {
 });
 
 // ===== Demo Data Logic =====
-function loadDemoData() {
+const getDemoHTML = (prefix) => `
+    <div style="margin-bottom: 12px; text-align: left; width: 100%;">
+        <label style="color:var(--text-muted); font-size:12px; text-transform:uppercase;">Business Type</label>
+        <select id="${prefix}-biz-type" class="tech-select" style="margin-bottom: 8px;">
+            <option value="retail">General Retail Store</option>
+            <option value="food">Food & Beverages Vendor</option>
+            <option value="pharmacy">Pharmacy/Chemist</option>
+            <option value="fashion">Fashion & Clothing Store</option>
+        </select>
+        <label style="color:var(--text-muted); font-size:12px; text-transform:uppercase;">Scenario</label>
+        <select id="${prefix}-scenario" class="tech-select" style="margin-bottom: 16px;">
+            <option value="thriving">Thriving Business</option>
+            <option value="struggling">Struggling Business (Profit Leaks)</option>
+        </select>
+    </div>
+`;
+
+if (welcomeModal) {
+    const actions = welcomeModal.querySelector('.modal-actions');
+    if (actions) actions.insertAdjacentHTML('afterbegin', getDemoHTML('modal'));
+}
+if (btnLoadDemo) {
+    const cont = document.createElement('div');
+    cont.innerHTML = getDemoHTML('settings');
+    btnLoadDemo.parentElement.parentElement.insertBefore(cont.firstElementChild, btnLoadDemo.parentElement);
+}
+
+function loadDemoData(isModal = false) {
     const hasData = state.inventory.length > 0 || state.sales.length > 0 || state.expenses.length > 0;
     if(hasData && !confirm('This will wipe your current data and load a demo dataset. Continue?')) return;
     
+    let bizType = 'retail';
+    let scenario = 'thriving';
+    
+    if (isModal) {
+        const typeEl = document.getElementById('modal-biz-type');
+        const scenEl = document.getElementById('modal-scenario');
+        if (typeEl) bizType = typeEl.value;
+        if (scenEl) scenario = scenEl.value;
+    } else {
+        const typeEl = document.getElementById('settings-biz-type');
+        const scenEl = document.getElementById('settings-scenario');
+        if (typeEl) bizType = typeEl.value;
+        if (scenEl) scenario = scenEl.value;
+    }
+    
     triggerAutoRefresh(() => {
         const now = new Date();
-        const d1 = new Date(now); d1.setDate(d1.getDate() - 3);
-        const d2 = new Date(now); d2.setDate(d2.getDate() - 2);
-        const d3 = new Date(now); d3.setDate(d3.getDate() - 1);
+        const dates = [];
+        for (let i = 29; i >= 0; i--) {
+            const d = new Date(now);
+            d.setDate(d.getDate() - i);
+            dates.push(d);
+        }
 
+        const isStruggling = scenario === 'struggling';
+
+        const catalogs = {
+            retail: [
+                { name: 'Indomie Noodles', uom: 'Cartons', cost: 4500, price: 5500 },
+                { name: 'Peak Milk Refill', uom: 'Sachets', cost: 1500, price: 1800 },
+                { name: 'Golden Penny Rice', uom: 'Bags', cost: 42000, price: 46000 },
+                { name: 'Coca-Cola', uom: 'Packs', cost: 2000, price: 2500 },
+                { name: 'Power Oil', uom: 'Sachets', cost: 850, price: 1000 },
+                { name: 'Dangote Sugar', uom: 'Bags', cost: 3800, price: 4200 },
+                { name: 'Milo Refill', uom: 'Sachets', cost: 2100, price: 2500 },
+                { name: 'Ariel Detergent', uom: 'Sachets', cost: 800, price: 1000 },
+                { name: 'Geisha Mackerel', uom: 'Tins', cost: 750, price: 900 },
+                { name: 'Dano Milk', uom: 'Tins', cost: 1200, price: 1500 }
+            ],
+            food: [
+                { name: 'Jollof Rice w/ Chicken', uom: 'Portions', cost: 1200, price: 2500 },
+                { name: 'Fried Rice w/ Beef', uom: 'Portions', cost: 1200, price: 2500 },
+                { name: 'Pounded Yam & Egusi', uom: 'Portions', cost: 1500, price: 3000 },
+                { name: 'Suya', uom: 'Sticks', cost: 300, price: 600 },
+                { name: 'Zobo Drink', uom: 'Bottles', cost: 200, price: 500 },
+                { name: 'Beef Sausage Roll', uom: 'Pieces', cost: 150, price: 300 },
+                { name: 'Meat Pie', uom: 'Pieces', cost: 300, price: 600 },
+                { name: 'Chilled Coke', uom: 'Bottles', cost: 150, price: 300 },
+                { name: 'Bottled Water', uom: 'Bottles', cost: 100, price: 200 },
+                { name: 'Moi Moi', uom: 'Wraps', cost: 200, price: 400 }
+            ],
+            pharmacy: [
+                { name: 'Paracetamol', uom: 'Cards', cost: 100, price: 200 },
+                { name: 'Vitamin C', uom: 'Bottles', cost: 300, price: 500 },
+                { name: 'Artemether (Anti-malaria)', uom: 'Packs', cost: 800, price: 1500 },
+                { name: 'Cough Syrup', uom: 'Bottles', cost: 600, price: 1000 },
+                { name: 'Amoxicillin', uom: 'Cards', cost: 400, price: 800 },
+                { name: 'Bandages', uom: 'Rolls', cost: 50, price: 150 },
+                { name: 'Hand Sanitizer', uom: 'Bottles', cost: 500, price: 1000 },
+                { name: 'Blood Tonic', uom: 'Bottles', cost: 900, price: 1500 },
+                { name: 'ORS', uom: 'Sachets', cost: 50, price: 100 },
+                { name: 'Inhaler', uom: 'Pieces', cost: 2500, price: 4000 }
+            ],
+            fashion: [
+                { name: 'Ankara Fabric', uom: 'Yards', cost: 5000, price: 8000 },
+                { name: 'Plain T-Shirt', uom: 'Pieces', cost: 2000, price: 4000 },
+                { name: 'Denim Jeans', uom: 'Pieces', cost: 4000, price: 8000 },
+                { name: 'Sneakers', uom: 'Pairs', cost: 10000, price: 18000 },
+                { name: 'Leather Slippers', uom: 'Pairs', cost: 3000, price: 6000 },
+                { name: 'Handbag', uom: 'Pieces', cost: 6000, price: 12000 },
+                { name: 'Baseball Cap', uom: 'Pieces', cost: 1000, price: 2500 },
+                { name: 'Men Native Wear', uom: 'Sets', cost: 15000, price: 25000 },
+                { name: 'Sunglasses', uom: 'Pieces', cost: 1500, price: 4000 },
+                { name: 'Wristwatch', uom: 'Pieces', cost: 4000, price: 10000 }
+            ]
+        };
+
+        let catalog = catalogs[bizType] || catalogs['retail'];
+        
         // Generate Inventory
-        const inv = [
-            { id: generateId(), name: 'Indomie Noodles', uom: 'Cartons', costPrice: 4500, sellingPrice: 5500, stock: 45, minStockAlert: 10, createdAt: d1.getTime() },
-            { id: generateId(), name: 'Peak Milk Refill', uom: 'Sachets', costPrice: 1500, sellingPrice: 1800, stock: 12, minStockAlert: 20, createdAt: d1.getTime() },
-            { id: generateId(), name: 'Golden Penny Rice', uom: 'Bags', costPrice: 42000, sellingPrice: 45000, stock: 5, minStockAlert: 5, createdAt: d1.getTime() },
-            { id: generateId(), name: 'Coca-Cola', uom: 'Packs', costPrice: 2000, sellingPrice: 2500, stock: 2, minStockAlert: 5, createdAt: d1.getTime() },
-            { id: generateId(), name: 'Power Oil', uom: 'Sachets', costPrice: 850, sellingPrice: 1000, stock: 80, minStockAlert: 15, createdAt: d1.getTime() },
-            { id: generateId(), name: 'Dangote Sugar', uom: 'Bags', costPrice: 3800, sellingPrice: 4200, stock: 3, minStockAlert: 5, createdAt: d1.getTime() },
-            { id: generateId(), name: 'Milo Refill', uom: 'Sachets', costPrice: 2100, sellingPrice: 2000, stock: 30, minStockAlert: 10, createdAt: d1.getTime() } // Selling below cost to trigger leak
-        ];
+        let inv = catalog.map((item, idx) => {
+            let sellP = item.price;
+            let qty = isStruggling ? Math.floor(Math.random() * 5) : Math.floor(Math.random() * 50) + 20;
 
-        // Generate Sales
-        const sales = [
-            { id: generateId(), date: d1.toISOString(), totalRevenue: 11000, totalCOGS: 9000, items: [
-                { itemId: inv[0].id, name: 'Indomie Noodles', uom: 'Cartons', quantity: 2, salePrice: 5500, costPrice: 4500, subtotalRev: 11000, subtotalCOGS: 9000 }
-            ]},
-            { id: generateId(), date: d2.toISOString(), totalRevenue: 50000, totalCOGS: 44000, items: [
-                { itemId: inv[2].id, name: 'Golden Penny Rice', uom: 'Bags', quantity: 1, salePrice: 45000, costPrice: 42000, subtotalRev: 45000, subtotalCOGS: 42000 },
-                { itemId: inv[3].id, name: 'Coca-Cola', uom: 'Packs', quantity: 2, salePrice: 2500, costPrice: 2000, subtotalRev: 5000, subtotalCOGS: 4000 }
-            ]},
-            { id: generateId(), date: d3.toISOString(), totalRevenue: 6000, totalCOGS: 6300, items: [
-                { itemId: inv[6].id, name: 'Milo Refill', uom: 'Sachets', quantity: 3, salePrice: 2000, costPrice: 2100, subtotalRev: 6000, subtotalCOGS: 6300 }
-            ]}
-        ];
+            // Introduce leakage strictly for struggling scenario
+            if (isStruggling && idx % 3 === 0) {
+                sellP = item.cost * 0.9; // Sell below cost
+            }
+
+            return { 
+                id: generateId(), 
+                name: item.name, 
+                uom: item.uom, 
+                costPrice: item.cost, 
+                sellingPrice: sellP, 
+                stock: qty, 
+                minStockAlert: 10, 
+                createdAt: dates[0].getTime() 
+            };
+        });
+
+        // Generate Sales 30-day pattern
+        let sales = [];
+        dates.forEach((d, dayIndex) => {
+            // Some days have no sales in struggling scenario
+            if(isStruggling && Math.random() < 0.3) return;
+            
+            // Random number of transactions a day
+            let txCount = isStruggling ? Math.floor(Math.random() * 3) + 1 : Math.floor(Math.random() * 8) + 3;
+            
+            // On weekend (Saturday=6), more sales for thriving
+            if(!isStruggling && d.getDay() === 6) txCount += Math.floor(Math.random() * 5) + 3;
+            
+            for(let t = 0; t < txCount; t++) {
+                let saleItems = [];
+                let totalRev = 0, totalCOGS = 0;
+                
+                let itemCount = Math.floor(Math.random() * 3) + 1;
+                let usedIdx = new Set();
+                
+                for(let i = 0; i < itemCount; i++) {
+                    let rIdx = Math.floor(Math.random() * inv.length);
+                    if(usedIdx.has(rIdx)) continue;
+                    usedIdx.add(rIdx);
+                    
+                    let prod = inv[rIdx];
+                    let qty = Math.floor(Math.random() * 3) + 1;
+                    
+                    let rev = qty * prod.sellingPrice;
+                    let cogs = qty * prod.costPrice;
+                    
+                    saleItems.push({
+                        itemId: prod.id,
+                        name: prod.name,
+                        uom: prod.uom,
+                        quantity: qty,
+                        salePrice: prod.sellingPrice,
+                        costPrice: prod.costPrice,
+                        subtotalRev: rev,
+                        subtotalCOGS: cogs
+                    });
+                    
+                    totalRev += rev;
+                    totalCOGS += cogs;
+                }
+                
+                if (saleItems.length > 0) {
+                    let saleDate = new Date(d);
+                    saleDate.setHours(9 + Math.floor(Math.random() * 8));
+                    saleDate.setMinutes(Math.floor(Math.random() * 60));
+                    
+                    sales.push({
+                        id: generateId(),
+                        date: saleDate.toISOString(),
+                        totalRevenue: totalRev,
+                        totalCOGS: totalCOGS,
+                        items: saleItems
+                    });
+                }
+            }
+        });
 
         // Generate Expenses
-        const expenses = [
-            { id: generateId(), date: d1.toISOString(), amount: 3000, category: 'Transport', notes: 'Market run' },
-            { id: generateId(), date: d2.toISOString(), amount: 15000, category: 'Rent', notes: 'Shop portion' },
-            { id: generateId(), date: now.toISOString(), amount: 2000, category: 'Electricity', notes: 'Prepaid token' }
-        ];
+        let expenses = [];
+        let expCategories = ['Transport', 'Electricity', 'Rent', 'Salaries', 'Marketing', 'Other (Misc)'];
+        
+        dates.forEach((d) => {
+            let chance = isStruggling ? 0.3 : 0.1;
+            if(Math.random() < chance) {
+                let cat = expCategories[Math.floor(Math.random() * expCategories.length)];
+                let factor = isStruggling ? (Math.random() * 10000 + 5000) : (Math.random() * 3000 + 1000);
+                
+                let expDate = new Date(d);
+                expDate.setHours(10 + Math.floor(Math.random() * 5));
+                
+                expenses.push({ 
+                    id: generateId(), 
+                    date: expDate.toISOString(), 
+                    amount: Math.round(factor), 
+                    category: cat, 
+                    notes: 'Demo generated expense' 
+                });
+            }
+        });
+        
+        // Add one large rent expense midway to make charts realistic
+        expenses.push({
+            id: generateId(),
+            date: dates[15].toISOString(),
+            amount: isStruggling ? 450000 : 50000,
+            category: 'Rent',
+            notes: 'Monthly Shop Rent'
+        });
 
         state.inventory = inv;
         state.sales = sales;
         state.expenses = expenses;
-        state.settings.capital = 50000;
+        state.settings.capital = isStruggling ? 20000 : 200000;
+        state.settings.businessName = "Demo " + bizType.charAt(0).toUpperCase() + bizType.slice(1) + " Store (" + scenario + ")";
         
         saveState();
         document.getElementById('set-capital').value = state.settings.capital;
-        showToast('Demo data loaded successfully!', 'success');
+        document.getElementById('set-name').value = state.settings.businessName;
+        headerBusinessName.textContent = state.settings.businessName;
+
+        showToast('Extensive demo data loaded seamlessly!', 'success');
         
-        // Re-initialize app to immediately reflect data
         init();
     });
 }
@@ -231,10 +417,10 @@ if(btnWelcomeStart) {
     btnWelcomeStart.addEventListener('click', () => { welcomeModal.classList.add('hidden'); });
 }
 if(btnWelcomeDemo) {
-    btnWelcomeDemo.addEventListener('click', () => { welcomeModal.classList.add('hidden'); loadDemoData(); });
+    btnWelcomeDemo.addEventListener('click', () => { welcomeModal.classList.add('hidden'); loadDemoData(true); });
 }
 if(btnLoadDemo) {
-    btnLoadDemo.addEventListener('click', loadDemoData);
+    btnLoadDemo.addEventListener('click', () => loadDemoData(false));
 }
 
 // ===== Dashboard Logic =====
