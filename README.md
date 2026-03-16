@@ -1,5 +1,7 @@
 # FinIQ
+## App Preview
 
+![Screenshot 2026-03-16 163128.png](Screenshot 2026-03-16 163128.png)
 FinIQ is a lightweight financial intelligence tool designed to help informal retail businesses track their transactions, understand their profit, and detect hidden financial leaks.
 
 The application transforms simple business activities into meaningful financial insights that empower small business owners to make better decisions.
