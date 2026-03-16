@@ -105,3 +105,7 @@ mobile application support
 advanced analytics and forecasting
 
 integration with digital payment systems
+
+License
+
+This project was developed as part of the 3MTT Knowledge Showcase Challenge.
